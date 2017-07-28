@@ -1,0 +1,31 @@
+
+<link rel="import" href="iron-ajax/iron-ajax.html">
+
+<dom-module id="user-profile">
+  <template>
+    <h2>[[user.fname]] [[user.lname]] </h2>
+    <iron-ajax
+      id="userData"
+      last-response="{{user}}"
+      on-response="response"
+    ></iron-ajax>
+  </template>
+  <script>
+  Polymer({
+    is:'user-profile',
+    ready:function(){
+      console.log(this.data)
+    },
+    observers:['getUserData(data.userId)'],
+    getUserData: function(id){
+      console.log(id)
+      this.$.userData.url = `/api/user/${id}`;
+      this.$.userData.generateRequest();
+    },
+    response:function(res) {
+      console.log(res)
+    }
+
+  })
+  </script>
+</dom-module>

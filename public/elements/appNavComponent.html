@@ -1,0 +1,92 @@
+<link rel="import" href="/polymer/polymer.html"></link>
+<link rel="import" href="/px-app-nav/px-app-nav.html"></link>
+<link rel="import" href="/app-route/app-route.html"></link>
+<link rel="import" href="/app-route/app-location.html"></link>
+<link rel="import" href="/elements/dataTableComponent.html"></link>
+<link rel="import" href="/elements/profile.html"></link>
+
+
+<dom-module id='side-nav' >
+  <template>
+    <style>
+      .viewport{
+        background-color: white;
+        height: 100%;
+        overflow-y: scroll;
+      }
+    </style>
+    <px-app-nav id="nav" nav-items='[
+      {"path":"/users","icon":"fa-home","label":"Users"}
+    ]'>
+    </px-app-nav>
+
+    <main class="u-pt-- u-pr-- u-pl--" role="main">
+      <!-- app-location captures url and assigns _route value -->
+      <!--<app-location id="carbonLocation"
+                    route="{{_route}}"
+                    use-hash-as-path>
+      </app-location>
+      This component gives us the whole route url depending on whatever we used as the path
+      url is broken up
+-->
+
+      <app-location id="carbonLocation"
+                    route="{{_route}}"
+                    use-hash-as-path>
+      </app-location>
+
+      <!-- /my-deals route and view -->
+      <!--<app-route route="[[_route]]"
+                 pattern="/profile"  <-
+                 data="{{pageData}}" <- allows you to pass data objects through the pages
+                 tail="{{pageTail}}" <- if the current url is users/userid
+                 active="{{_profileActive}}">
+               </app-route>
+
+             Won't need all of these attributes, but some of them I will
+             Don't need data or tail for now, because they are for more complex things
+           -->
+      <app-route route="[[_route]]"
+                 pattern="/profile/:userId"
+                 active="{{_profileActive}}"
+                 data="{{data}}">
+      </app-route>
+      <!-- <px-view active="[[_profileActive]]"
+               element-href="/profile.html">
+      </px-view> -->
+      <app-route route="[[_route]]"
+                 pattern="/users"
+                 active="{{_userDataTableActive}}">
+      </app-route>
+
+
+      <div class="viewport">
+        <template is="dom-if" if="[[_userDataTableActive]]">
+          <data-table></data-table>
+        </template>
+        <template is="dom-if" if="[[_profileActive]]">
+          <user-profile data="[[data]]"></user-profile>
+        </template>
+      </div>
+    </main>
+  </template>
+
+  <script type="text/javascript">
+    Polymer({
+      is:'side-nav',
+      response: function(res) {
+
+      },
+      ready: function() {
+        this._goToDefaultRoute();
+      },
+      _goToDefaultRoute: function() {
+      // set default route to /my-deals
+        var l = window.location;
+        if((l.hash === `#/` || l.hash === '') && l.pathname === '/') {
+          l.hash = '/users';
+        }
+      },
+    })
+  </script>
+</dom-module>

@@ -1,0 +1,6 @@
+{
+  "name": "practice",
+  "short_name": "practice",
+  "start_url": "/",
+  "display": "standalone"
+}
