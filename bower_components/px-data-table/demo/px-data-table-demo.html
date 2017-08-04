@@ -1,6 +1,5 @@
 <!-- Common imports -->
 <link rel="import" href="../../polymer/polymer.html" />
-<link rel="import" href="../../px-polymer-font-awesome/px-polymer-font-awesome.html" />
 
 <!-- Common demo imports -->
 <link rel="import" href="../../px-demo/px-demo-header.html" />
@@ -11,7 +10,7 @@
 <link rel="import" href="../../px-demo/px-demo-interactive.html" />
 <link rel="import" href="../../px-demo/px-demo-component-snippet.html" />
 
-<!-- Imports for this componnent -->
+<!-- Imports for this component -->
 <link rel="import" href="../../px-demo/css/px-demo-styles.html" />
 <link rel="import" href="../px-data-table.html" />
 
@@ -46,11 +45,10 @@
               selectable="{{props.selectable.value}}"
               single-select="{{props.singleSelect.value}}"
               show-column-chooser="{{props.showColumnChooser.value}}"
-              table-columns="{{props.tableColumns.value}}"
-              table-rows="{{props.tableRows.value}}"
               hide-pagination-control="{{props.hidePaginationControl.value}}"
-              include-all-columns="{{props.includeAllColumns.value}}">
-              <px-data-table-column name="first" filterable sortable editable></px-data-table-column>
+              include-all-columns="{{props.includeAllColumns.value}}"
+              language="{{props.language.value}}">
+              <px-data-table-column name="first" placeholder="First Name" filterable sortable editable></px-data-table-column>
           </px-data-table>
         </div>
       </px-demo-component>
@@ -87,16 +85,7 @@
         value: function(){
           return [
             { configName: "Simple",
-              striped: false,
-              filterable: false,
-              sortable: false,
-              selectable: false,
-              singleSelect: false,
-              showColumnChooser: false,
-              tableColumns: false,
-              tableRows: true,
-              hidePaginationControl: true,
-              includeAllColumns: true },
+              configReset: true },
 
             { configName: "Complex",
               striped: true,
@@ -105,8 +94,6 @@
               selectable: true,
               singleSelect: true,
               showColumnChooser: true,
-              tableColumns: false,
-              tableRows: false,
               hidePaginationControl: false,
               includeAllColumns: true }
           ]
@@ -115,7 +102,7 @@
       hideLocalize: {
       type: Array,
       value: function() {
-          return ['useKeyIfMissing','formats','pathToResources','loadResources','app-localize-resources-error','app-localize-resources-loaded']
+          return ['localize','useKeyIfMissing','formats','pathToResources','loadResources','app-localize-resources-error','app-localize-resources-loaded']
         }
       }
     },
@@ -125,6 +112,13 @@
         type: Object,
         defaultValue: [{"first":"Valentine","last":"Meyer","email":"valentinemeyer@scentric.com"},{"first":"Silva","last":"Alexander","email":"silvaalexander@gmail.com"},{"first":"Hopkins","last":"Wong","email":"hopkinswong@hotmail.com"},{"first": "Joe","last": "Sherman","email": "joejoe@yahoo.com"},{"first": "Jane","last": "Bartlett","email": "jane@scentric.com"}],
         inputType: 'code:JSON'
+      },
+
+      language: {
+        type: String,
+        defaultValue: 'en',
+        inputType: 'text',
+        inputDisabled: true
       },
 
       striped: {
@@ -158,18 +152,6 @@
       },
 
       showColumnChooser: {
-        type: Boolean,
-        defaultValue: false,
-        inputType: 'toggle'
-      },
-
-      tableColumns: {
-        type: Boolean,
-        defaultValue: false,
-        inputType: 'toggle'
-      },
-
-      tableRows: {
         type: Boolean,
         defaultValue: false,
         inputType: 'toggle'

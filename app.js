@@ -12,9 +12,13 @@ app.use(bodyParser.json());
 app.use(express.static('bower_components'))
 app.use(express.static('public'))
 
-var port     = process.env.PORT || 8080; // set our port
+var port = process.env.PORT || 8080; // set our port
 
 var mongoose   = require('mongoose');
+
+//img oath
+var imgPath = '/public/images';
+
 mongoose.connect('mongodb://localhost/test'); // connect to our database
 
 

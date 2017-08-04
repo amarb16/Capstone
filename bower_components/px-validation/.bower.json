@@ -1,10 +1,11 @@
 {
   "name": "px-validation",
-  "version": "0.4.5",
+  "version": "1.0.2",
   "main": [
     "px-validation.html"
   ],
   "ignore": [
+    "*.enc",
     ".*",
     "node_modules",
     "bower_components",
@@ -24,21 +25,22 @@
     "wct.conf.json"
   ],
   "dependencies": {
-    "polymer": "^1.6.0",
-    "px-theme": "^2.0.1"
+    "polymer": "^1.9.0"
   },
   "devDependencies": {
-    "px-starter-kit-design": "^0.7.0",
-    "px-demo": "^1.2.4"
+    "px-demo": "^2.0.0"
+  },
+  "resolutions": {
+    "webcomponentsjs": "^0.7.24"
   },
   "homepage": "https://github.com/predixDev/px-validation",
-  "_release": "0.4.5",
+  "_release": "1.0.2",
   "_resolution": {
     "type": "version",
-    "tag": "v0.4.5",
-    "commit": "ef2ede382bc4dd476e49b3816bb90a16cd955e0a"
+    "tag": "v1.0.2",
+    "commit": "fe0657467bb4fcbf1aef991e07a93d3d0177f4d2"
   },
   "_source": "https://github.com/predixDev/px-validation.git",
-  "_target": "^0.4.0",
+  "_target": "^1.0.0",
   "_originalSource": "px-validation"
 }

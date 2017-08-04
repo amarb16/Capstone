@@ -1,9 +1,33 @@
-
 <link rel="import" href="iron-ajax/iron-ajax.html">
 
 <dom-module id="user-profile">
   <template>
-    <h2>[[user.fname]] [[user.lname]] </h2>
+    <style>
+      #totalProfile {
+        padding-left: 50px;
+      }
+      img {
+        float: left;
+      }
+    </style>
+    <div id="totalProfile">
+      <img src="[[user.picture]]" alt="[[user.fname]] [[user.lname]]">
+      <h2>[[user.fname]] [[user.lname]] </h2>
+      [[user.position]],&nbsp;&nbsp;[[user.business]]<br>
+      [[user.address]]<br>
+      [[user.location]]<br>
+      [[user.sso]]<br><br>
+      <b>Willing to travel?</b>&nbsp;[[user.travelQues]]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Willing to relocate?</b>&nbsp;[[user.relocateQues]]<br><br>
+
+
+      Building: [[user.building]]<br>
+      Phone: [[user.phone]]<br>
+      Email: <a href="mailto:[[user.email]]">[[user.email]]</a><br><br>
+      <b>Technical Background:</b> <u>[[user.technicalBack]]</u><br>
+      <b>Learning Objectives:</b> <u>[[user.learningObject]]</u><br>
+      <b>Training:</b> <u>[[user.training]]</u><br>
+      <b>Certificates:</b> <u>[[user.certificates]]</u>
+    </div>
     <iron-ajax
       id="userData"
       last-response="{{user}}"

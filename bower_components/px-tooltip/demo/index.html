@@ -1,6 +1,6 @@
 <!-- Common imports -->
 <link rel="import" href="../../polymer/polymer.html" />
-<link rel="import" href="../../px-polymer-font-awesome/polymer-font-awesome.html" />
+<link rel="import" href="../../px-icon-set/px-icon-set.html" />
 
 <!-- Common demo imports -->
 <link rel="import" href="../../px-demo/px-demo-header.html" />
@@ -11,9 +11,9 @@
 <link rel="import" href="../../px-demo/px-demo-interactive.html" />
 <link rel="import" href="../../px-demo/px-demo-component-snippet.html" />
 
-<!-- Imports for this componnent -->
+<!-- Imports for this component -->
 <link rel="import" href="../../px-demo/css/px-demo-styles.html" />
-<link rel="import" href="../../px-tooltip/px-tooltip.html" />
+<link rel="import" href="../px-tooltip.html" />
 
 <!-- Demo DOM module -->
 <dom-module id="local-element-demo">
@@ -23,11 +23,7 @@
     <!-- Header -->
     <px-demo-header
         module-name="px-tooltip"
-        description="A Tooltip is meant to give users more information related to an item shortly after they hover over the target component (the delay is configurable).
-          When the mouse leaves the target area, the tooltip goes away.
-          Tooltips can be positioned above, below, to the left, or to the right of the target.
-          A Smart Orientation option is included that will attempt to automatically choose a placement based on the real estate available – this attempts to prevent the tooltip from going off the screen.
-          Note: tooltips are not recommended for mobile or tablet applications since the hover affordance is inconsistent across devices and platforms (3D touch, tap-and-hold, proximity sensors, etc).">
+        description="A tooltip is a type of popup that provides additional information to users once they hover over the invoking element for a configurable delay period. When the mouse leaves the target area, the tooltip goes away.">
     </px-demo-header>
 
     <!-- Interactive -->
@@ -60,7 +56,7 @@
     </px-demo-interactive>
 
     <!-- API Viewer -->
-    <px-demo-api-viewer source="px-tooltip"></px-demo-api-viewer>
+    <px-demo-api-viewer source="px-tooltip" hide='["assignParentResizable","getTargetPositionCenterOfLeftRight","getTargetPositionCenterOfTopBottom","notifyResize","resizerShouldNotify","stopResizeNotificationsFor"]'></px-demo-api-viewer>
 
     <!-- Footer -->
     <px-demo-footer></px-demo-footer>
@@ -84,19 +80,17 @@
         value: function(){
           return [
 
-            { configName: "Auto",
+            { configName: "Auto position",
               orientation: "auto",
-              tooltipMessage: "This is a tooltip message",
+              tooltipMessage: "This is a tooltip",
               delay: 50,
-              tooltipStyle: "dark",
               siblingElement: "<button id='btn1'>Hover over me</button>"
             },
 
-            { configName: "Light style",
+            { configName: "Bottom",
               orientation: "bottom",
-              tooltipMessage: "This is a tooltip message",
-              delay: 500,
-              tooltipStyle: "light",
+              tooltipMessage: "This is a tooltip",
+              delay: 50,
               siblingElement: "<button id='btn1'>Hover over me</button>"
             }
           ]
@@ -118,14 +112,14 @@
 
       delay: {
         type: String,
-        defaultValue: '500',
+        defaultValue: '50',
         inputType: 'text',
-        inputPlaceholder: '500'
+        inputPlaceholder: '50'
       },
 
       tooltipMessage: {
         type: String,
-        defaultValue: 'This is a tooltip message',
+        defaultValue: 'This is a tooltip',
         inputType: 'text',
         inputPlaceholder: 'Tooltip message'
       },
@@ -135,13 +129,6 @@
         inputType: 'dropdown',
         defaultValue: 'auto',
         inputChoices: ['auto', 'left', 'right', 'top', 'bottom']
-      },
-
-      tooltipStyle: {
-        type: String,
-        defaultValue: 'dark',
-        inputType: 'dropdown',
-        inputChoices: ['dark','light']
       },
 
       siblingElement: {

@@ -3,13 +3,11 @@
 
 <!-- Common demo imports -->
 <link rel="import" href="../../px-sass-doc/px-sass-doc.html" />
-<link rel="import" href="../css/px-typography-design-demo-styles.html" />
 
 <!-- Demo DOM module -->
 <dom-module id="local-element-demo">
   <template>
     <!-- 0: Import the styles-->
-    <style include="px-typography-design-demo-styles" is="custom-style"></style>
 
 <!-- 1: Describe Module -->
 <px-sass-doc
@@ -30,8 +28,7 @@
   choose-with="dropdown"
   choices='[
     "normal (default)",
-    "light",
-    "semibold"
+    "bold"
   ]'
   default-choice="normal (default)">
 </px-sass-doc-option>
@@ -53,12 +50,8 @@
 <span class="weight--normal">Normal Text</span>
 
 
-<!-- Light -->
-<span class="weight--light">Light Text</span>
-
-
-<!-- Semibold -->
-<span class="weight--semibold">Bold Text</span>
+<!-- Bold -->
+<span class="weight--bold">Bold Text</span>
 ```
 </section>
 
@@ -73,10 +66,10 @@
     is: 'local-element-demo',
 
     attached : function(){
-      var boundHandler = this._handleOptionsUpdated.bind(this); 
+      var boundHandler = this._handleOptionsUpdated.bind(this);
       this.addEventListener('px-sass-doc-options-updated', boundHandler)
     },
-    
+
     detached : function(){
       this.removeEventListener('px-sass-doc-options-updated', boundHandler);
     },
@@ -93,8 +86,7 @@
     _typeClasses : function() {
       var opts = this.selectedOptions || {};
       if (opts["Font Weight"] === "normal (default)")    return "weight--normal";
-      if (opts["Font Weight"] === "light")               return "weight--light";
-      if (opts["Font Weight"] === "semibold")            return "weight--semibold";
+      if (opts["Font Weight"] === "bold")            return "weight--bold";
     },
 
     _importCode : function() {
@@ -103,4 +95,3 @@
 
   });
 </script>
-

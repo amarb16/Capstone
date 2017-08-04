@@ -1,6 +1,24 @@
-v1.10.13
+v2.0.4
 ==================
-* fix css var for hamburger
+* update demo to use unique name
+
+v2.0.3
+==================
+* Changed overflow icon to px-utl:overflow instead of px-nav:collapse
+
+v2.0.2
+==================
+* Rebuilt demo
+* Added css variable docs
+
+v2.0.1
+==================
+* Move to px-app-asset-graph API for creating and selecting items
+
+v2.0.0
+==================
+* Complete overhaul of px-app-nav API and design. See the documentation for
+  more information on how to migrate to the new component.
 
 v1.10.12
 ==================

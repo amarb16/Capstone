@@ -1,6 +1,6 @@
 {
   "name": "px-colors-design",
-  "version": "0.3.9",
+  "version": "1.0.2",
   "authors": [
     "General Electric"
   ],
@@ -14,6 +14,7 @@
   "homepage": "https://github.com/PredixDev/px-colors-design.git",
   "private": false,
   "ignore": [
+    "*.enc",
     "**/.*",
     "node_modules",
     "bower_components",
@@ -28,18 +29,22 @@
     "OSS_Notice.pdf"
   ],
   "devDependencies": {
-    "px-starter-kit-design": "^0.7.0",
-    "px-sass-doc": "^0.4.3",
-    "px-dark-theme": "^1.0.1",
-    "px-dark-demo-theme": "^1.0.3"
+    "px-starter-kit-design": "^1.0.0",
+    "px-sass-doc": "^1.0.0",
+    "px-dark-theme": "^2.0.0",
+    "px-dark-demo-theme": "^2.0.0",
+    "px-layout-design": "^1.0.0"
   },
-  "_release": "0.3.9",
+  "resolutions": {
+    "webcomponentsjs": "^0.7.24"
+  },
+  "_release": "1.0.2",
   "_resolution": {
     "type": "version",
-    "tag": "v0.3.9",
-    "commit": "2a44a6d1594b500715652fe902c60c91af96ff1b"
+    "tag": "v1.0.2",
+    "commit": "258c5c50bd17dbc5b7d9f961119bb2c869ce6c0f"
   },
   "_source": "https://github.com/predixDev/px-colors-design.git",
-  "_target": "^0.3.0",
+  "_target": "^1.0.0",
   "_originalSource": "px-colors-design"
 }

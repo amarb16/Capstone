@@ -1,9 +1,11 @@
 {
   "verbose": false,
+  "compile": "auto",
   "plugins": {
     "local": {
       "browsers": [
-        "chrome"
+        "chrome",
+        "firefox"
       ]
     },
     "sauce": {
@@ -26,8 +28,8 @@
         },
         {
           "browserName": "safari",
-          "platform": "OS X 10.11",
-          "version": "10"
+          "platform": "OS X 10.10",
+          "version": "8"
         },
         {
           "browserName": "firefox",
@@ -37,6 +39,9 @@
     }
   },
   "suites": [
-    "test/px-app-nav-test-fixture.html"
+    "test/px-app-nav-fixture.html",
+    "test/px-app-nav-item-fixture.html",
+    "test/px-app-nav-subitem-fixture.html",
+    "test/px-app-nav-group-fixture.html"
   ]
 }

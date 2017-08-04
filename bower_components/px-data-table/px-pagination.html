@@ -1,6 +1,8 @@
 <link rel="import" href="../polymer/polymer.html"/>
-<link rel="import" href="../px-polymer-font-awesome/px-polymer-font-awesome.html">
+<link rel="import" href="../px-icon-set/px-icon-set.html">
+<link rel="import" href="../px-icon-set/px-icon.html">
 <link rel="import" href="../app-localize-behavior/app-localize-behavior.html"/>
+<link rel="import" href="../px-dropdown/px-dropdown.html"/>
 
 <!--
 Element that provides pagination.
@@ -16,35 +18,31 @@ Element that provides pagination.
   <template>
     <style include="aha-table-styles"></style>
 
+    <div class="paginationContainer">
+
 			<span class="pagesize">
-				<span class="u-mr--">{{localize('Rows per page')}}</span>
-				<select id="pageSizeSelect" on-change="_changeDropDown">
-          <option selected>10</option>
-          <option>20</option>
-          <option>50</option>
-          <option>100</option>
-        </select>
+				<span class="rowsPerPage u-mr--">{{localize('Rows per page')}}</span>
+        <px-dropdown selected="{{pageSize}}" display-value="{{pageSize}}" select-by="val" button-style="bare--primary" items='{{pageSizeOptions}}' disable-clear></px-dropdown>
 			</span>
 
-			<span class="u-pl+ u-ml+ summary">
-				<span>{{firstItemIndexToDisplay}}</span>-<span>{{lastItemIndexToDisplay}}</span>
-				<span>{{localize('of')}}</span>
-				<span>{{numberOfItems}}</span>
-			</span>
+      <div class="paginationContainer u-ml+">
+        <span class="summary">
+          <strong>{{firstItemIndexToDisplay}}-{{lastItemIndexToDisplay}}</strong>
+          <span>{{localize('of')}}</span>
+          <span>{{numberOfItems}}</span>
+        </span>
+        <button id="previous" class$="btn {{_getPageupClass(currentPage)}}" on-click="goToPreviousPage">
+          <px-icon icon="px-nav:back"></px-icon>
+        </button>
+        <template is="dom-repeat" items="{{_pagerButtons(pageCount, currentPage)}}" as="page">
+          <span on-click="_goToPage" class$="{{_getPagerButtonClass(page.val, currentPage)}}">{{page.val}}</span>
+        </template>
+        <button id="next" class$="btn {{_getPagedownClass(currentPage, pageCount)}}" on-click="goToNextPage">
+          <px-icon icon="px-nav:next"></px-icon>
+        </button>
+      </div>
 
-			<span class="paging">
-				<button
-          class$="{{_getPageupClass(currentPage)}}"
-          on-click="goToPreviousPage"><iron-icon icon="fa:fa-angle-left"></iron-icon></button>
-				<span class="pager">
-					<template is="dom-repeat" items="{{_pagerButtons(pageCount, currentPage)}}" as="page">
-            <span on-click="_goToPage" class$="{{_getPagerButtonClass(page.val, currentPage)}}">{{page.val}}</span>
-          </template>
-				</span>
-				<button
-          class$="{{_getPagedownClass(currentPage, pageCount)}}"
-          on-click="goToNextPage"><iron-icon icon="fa:fa-angle-right"></iron-icon></button>
-			</span>
+    </div>
 
   </template>
 </dom-module>
@@ -60,7 +58,7 @@ Element that provides pagination.
     properties: {
 
       /**
-       * The total number of items
+       * The total number of items.
        */
       numberOfItems: {
         type: Number,
@@ -70,63 +68,36 @@ Element that provides pagination.
       },
 
       /**
-       * The size of a page
-       *
-       * Read only.
+       * The size of a page.
        */
       pageSize: {
         type: Number,
         value: 10,
-        notify: true,
-        readOnly: true
+        observer: '_goBackToFirstPage'
+      },
+
+      /**
+       * Options displayed in the page size dropdown.
+       */
+      pageSizeOptions: {
+        type: Array,
+        value: function() {
+          return [{"key":"1","val":"10"},
+                  {"key":"2","val":"20"},
+                  {"key":"3","val":"50"},
+                  {"key":"4","val":"100"}];
+        }
       },
 
       /**
        * Passes the firstItemIndexToDisplay back to the user
-       *
-       * Read only.
-       *
-       * 1-based
        */
       firstItemIndexToDisplay: {
         type: Number,
         notify: true,
         value: 1,
         readOnly: true
-      },
-      /**
-       * A valid IETF language tag as a string that `px-localize-behavior` will
-       * use to localize this component. Refer to px-localize-behavior for currently supported languages.
-       *
-       * See https://github.com/PolymerElements/app-localize-behavior for API
-       * documentation and more information.
-       */
-      language: {
-        type: String,
-        value: 'en'
-      },
-      /**
-      * Use the key for localization if value for  language is missing. Should
-      * always be true for  our components
-      */
-      useKeyIfMissing: {
-        type: Boolean,
-        value: true
-      },
-      /**
-       * Localizable strings for this component
-       */
-      resources: {
-        type: Object,
-        value: function() {
-          return {
-            'en': {
-              'of': 'of',
-              'Rows per page': 'Rows per page'
-            }
-          }
-        }
-      },
+      }
 
     },
 
@@ -170,39 +141,6 @@ Element that provides pagination.
     },
 
     /**
-     * Set page size public interface.
-     *
-     * Set Page size, trigger update of table, update combobox.
-     */
-    setPageSize: function(size) {
-      this._updatePageSize(size);
-    },
-
-    _changeDropDown: function(e) {
-      this._updatePageSize(parseInt(e.target.value));
-    },
-
-    _updatePageSize: function(size) {
-      var sizelist = [10, 20, 50, 100];
-      var index = sizelist.indexOf(size);
-
-      var parentElem = this.$.pageSizeSelect,
-        optionList = Polymer.dom(parentElem).querySelectorAll("option");
-
-      optionList.forEach(function(option) {
-        if(parseInt(option.value) === parseInt(size)) {
-          option.setAttribute('selected', '');
-          parentElem.selectedIndex = parseInt(index);
-        } else {
-          option.removeAttribute('selected');
-        }
-      });
-
-      this._setPageSize(size);
-      this._goBackToFirstPage();
-    },
-
-    /**
      * Go to the page number specified
      * @param number
      */
@@ -218,20 +156,20 @@ Element that provides pagination.
     },
 
     _getPageupClass: function(currentPage) {
-      return [currentPage === 1 ? "btn--disabled" : "", 'btn btn--bare btn--pagination previous'].join(' ');
+      return [currentPage === 1 ? "btn--disabled" : "", 'btn--bare'].join(' ');
     },
 
     _getPagedownClass: function(currentPage, pageCount) {
-      return [pageCount <= 0 || currentPage === pageCount ? "btn--disabled" : "", 'btn btn--bare btn--pagination next'].join(' ');
+      return [pageCount <= 0 || currentPage === pageCount ? "btn--disabled" : "", 'btn--bare'].join(' ');
     },
 
     _getPagerButtonClass: function(buttonValue, currentPage) {
       var classList = ['btn'];
       if(buttonValue === currentPage) {
-        classList.push('btn--icon', 'u-ml0', 'btn--pagination--number');
+        classList.push('btn--tertiary u-ml');
       }
       else {
-        classList.push('btn--bare', 'u-ml0', 'btn--bare__pagination');
+        classList.push('btn--bare');
       }
       return classList.join(' ');
     },

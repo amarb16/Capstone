@@ -1,40 +1,428 @@
-<!--
-    Relative paths assume component is being run from inside an app or another component, where dependencies are flat
-    siblings. When this component is run from its own repo (e.g. ui tests, examples), we assume the server is started with
-    'grunt depserve' (or similar server setup) to enable correct finding of bower dependencies for local runs
-    See https://github.com/jreichenberg/grunt-dep-serve#why-do-we-need-this
--->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../px-tooltip/px-tooltip.html">
-<link rel="import" href="../px-polymer-font-awesome/polymer-font-awesome.html">
-<link rel="import" href="../neon-animation/neon-animation.html">
+<link rel="import" href="../polymer/polymer.html"/>
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html"/>
+<link rel="import" href="../px-app-helpers/px-app-asset/px-app-asset-behavior-graph.html"/>
+<link rel="import" href="../px-app-helpers/px-app-asset/px-app-asset-behavior-selectable.html"/>
+
+<link rel="import" href="px-app-nav-behavior-measure-text.html"/>
+<link rel="import" href="px-app-nav-group.html"/>
+<link rel="import" href="px-app-nav-subgroup.html"/>
+<link rel="import" href="px-app-nav-item.html"/>
+<link rel="import" href="px-app-nav-subitem.html"/>
 
 <!--
+`px-app-nav` is an app-level navigation element that allows users to change the
+current view. The element is designed to work on desktop and mobile/touch
+devices, supporting any viewport size. It has three distinct visual styles that
+can be switched at any time to suit different app designs.
 
-#### Usage
+--------------------------------------------------------------------------------
+
+### Navigation items: Structuring data and managing selection
+
+The navigation accepts a list of items that will be converted into buttons for
+the user to interact with. Each item should have at least a label that will
+be displayed for the user to select and a unique ID that will be used to keep
+track of which item is selected.
+
+This data should be passed into the `items` attribute or property on the
+`px-app-nav` element.
+
+This is a simple navigation data example:
+
+
+    [
+      {
+        "id" : "home",
+        "label" : "Home",
+        "icon" : "px-nav:home"
+      },
+      {
+        "id" : "alert",
+        "label" : "Alerts",
+        "icon" : "px-nav:notification"
+      }
+    ]
+
+
+Top-level navigation items can optionally have child items. This is useful for
+creating categories of related pages. If a top-level navigation item has any
+children it cannot be selected directly - users can select its child items,
+and the top-level "category" item will get the selected visual style.
+
+This example shows a "Dashboards" category with a few different dashboard pages:
+
+
+    [
+      {
+        "id" : "dash",
+        "label" : "Dashboards",
+        "icon" : "px-fea:dashboard",
+        "children" : [
+          {
+            "id" : "plant-status",
+            "label" : "Plant Status Updates"
+          },
+          {
+            "id" : "output-info",
+            "label" : "Daily Output Measurements"
+          }
+        ]
+      }
+    ]
+
+All items (top-level items, top-level category items, and child items) should
+have the following properties:
+
+  - <strong>id</strong> {string} - unique string that identifies the item. Should only contain
+  valid, URI-safe characters. Example: "home", "alerts1"
+  - <strong>label</strong> {string} - short, human-readable text. The user will tap this text
+  to select the item. Example: "Homepage", "View Alerts"
+
+The following optional properties can be defined for top-level items only:
+
+  - <strong>icon</strong> {string} - valid [px-icon-set](https://www.predix-ui.com/#/modules/px-icon-set/)
+  icon placed next to the text label for the item. Use an icon from the `px-nav`
+  for the best sizing and visual styling.
+  - <strong>children</strong> {array} - child items that will be placed in a dropdown under
+  their parent top-level item. Each child item should have an `id` and `label`.
+  If the child item has an `icon` property, it will be ignored.
+
+Example top-level item without children:
+
+
+    {
+      "id" : "page-id",
+      "label" : "Page Title",
+      "icon" : "px-nav:grid-view"
+    }
+
+
+Example top-level item with child items:
+
+
+    {
+      "id" : "category-id",
+      "label" : "Category Title",
+      "icon" : "px-nav:tree",
+      "children" : [
+        {
+          "id" : "child-item-1",
+          "label" : "First Child Title"
+        },
+        {
+          "id" : "child-item-2",
+          "label" : "Second Child Title"
+        }
+      ]
+    }
+
+
+Additional data not used by `px-app-nav` can also be included in each item's
+object. This is a useful way to store metadata about app pages that will be used
+at run-time when a new nav item is selected. Example:
+
+
+    {
+      "id" : "all-cases",
+      "label" : "Cases",
+      "metadata" : {
+        "openCases" : "12",
+        "closedCases" : "82"
+      }
+    }
+
+The navigation will not mutate any of its items properties, making it easy to
+share any item metadata with other app components.
+
+#### Responding to item selection
+
+When the user taps on a navigation item it will be marked as selected. The app
+containing the `px-app-nav` element should respond to the new selected item and
+update its view.
+
+There are two ways for an app to listen for user selection:
+
+<strong>By reference:</strong> The element's `selected` property will be updated when a new
+item is selected. The `selected` property will notify a reference to the object
+that describes the item in the `items` array.
+
+<strong>By route:</strong> The element's `selectedRoute` property will notify an array of
+strings that trace the path from the root of the `items` graph to the selected
+item. This is useful for binding the navigation state to the app's URL path.
+(See the [px-app-route](https://www.predix-ui.com/#/components/px-app-route)
+module for a guide to binding the navigation state to the URL.)
+
+For example, given the following simplified navigation `items` list:
+
+    [
+      {
+        "id" : "dash",
+        "label" : "Dashboards",
+        "children" : [
+          {
+            "id" : "info-dash",
+            "label" : "Info Dashboard"
+          }
+        ]
+      }
+    ]
+
+When the user selects the "Info Dashboard", the `selectedRoute` will be set to
+`["dash", "info-fash"]`.
+
+#### Selecting an item programatically
+
+Sometimes it is useful for an app to automatically change the active page
+(e.g. opening the home page when the app is first loaded, or opening a dashboard
+when the user clicks on an alert message). The `selected` and `selectedRoute`
+properties can be used to set the selected navigation item state in the same
+way they are used to read the selected navigation item state.
+
+The simplest way to do this is through `selectedRoute`:
+
 
     <px-app-nav
-        nav-items='[{"path": "", "icon": "fa-exclamation-triangle", "label":"//alerts","subitems": [{"label": "Sub Category 1"}, {"label": "Sub Category 2"}]},{"path": "tab2", "icon": "fa-briefcase", "label": "Cases"}]'
-            <any-arbitrary-content></any-arbitrary-content>
-            <div class="auth">
-                <any-auth-control></any-auth-control>
-            </div>
+        items='[
+          { "label" : "Home",   "id" : "home",   "icon" : "px-nav:home" },
+          { "label" : "Alerts", "id" : "alerts", "icon" : "px-fea:alerts" },
+          { "label" : "Assets", "id" : "assets", "icon" : "px-fea:asset", children: [
+            { "label" : "Asset #1", "id" : "a1" },
+            { "label" : "Asset #2", "id" : "a2" }
+          ] }
+        ]'
+        selected-route='["assets", "a1"]'>
     </px-app-nav>
 
-#### Styling
+
+Items can also be selected by reference using the `selected` property. Selecting
+this way requires a bit of JavaScript; the navigation does a simple reference
+equality check (`item1 === item2`) to find the item in the graph and select it.
+Passing an item with the same properties as one of the `items` objects will
+not select it.
+
+
+    <px-app-nav id="nav"></px-app-nav>
+    <script>
+      var nav = document.getElementById('nav');
+      var navItems = [
+        { "id" : "home", "label" : "Home" }
+      ];
+      nav.items = navItems;
+      nav.selected = navItems[0];
+    </script>
+
+
+Data-binding can also be used to accomplish the same thing without manually
+finding the `px-app-nav` element in the DOM.
+
+### Binding to the URL path (routing)
+
+The `px-app-nav` element is designed to easily bind its state to the URL path.
+When the user selects an item, its `selectedRoute` can be encoded and used to
+set the URL path. The user can then bookmark the page or share the URL to link
+to a specific view. When the user loads a page with a URL path defined, that
+path can be decoded and used to select the right navigation item (and show a
+page).
+
+For a ready-to-go solution for binding `px-app-nav` to the URL path, see the
+[px-app-route](https://www.predix-ui.com/#/components/px-app-route) component.
+This component works best in applications built using Polymer as a data-binding
+framework, but also exposes methods to help convert the navigation's
+`selectedRoute` to and from a path string for use in other framework routers.
+
+Alternatively, listen for update events from the `selected` and/or `selectedRoute`
+properties in your app and send the values to the framework router of your
+choice, or implement your own routing system from scratch.
+
+--------------------------------------------------------------------------------
+
+
+### Navigation styles
+
+Two of the navigation styles, horizontal and vertical, should only be used on
+desktop screens. The collapsed navigation style should be used on mobile/touch
+devices and can also be used for desktop devices.
+
+
+#### 1. Horizontal navigation
+
+The horizontal navigation style is a persistent bar fixed to the top of the viewport.
+Navigation items are displayed in a row. If the window is too narrow to fit all
+the items, any overflowed items are placed into an overflow dropdown. If only
+one navigation item fits in the window, the navigation will automatically
+switch to collapse style (see description below).
+
+This is the default style. It doesn't require any additional configuration to
+enable beyond putting the `px-app-nav` element tag on the app page. The following
+example shows how to configure px-app-nav in the horizontal style:
+
+
+    <px-app-nav
+        items='[
+          { "label" : "Home",   "id" : "home",   "icon" : "px-nav:home" },
+          { "label" : "Alerts", "id" : "alerts", "icon" : "px-fea:alerts" },
+          { "label" : "Assets", "id" : "assets", "icon" : "px-fea:asset", children: [
+            { "label" : "Asset #1", "id" : "a1" },
+            { "label" : "Asset #2", "id" : "a2" }
+          ] }
+        ]'
+        selected-route='["assets","a1"]'>
+    </px-app-nav>
+
+<strong>Positioning a horizontal app-nav in an app:</strong>
+
+The horizontal style `px-app-nav` element should be fixed at the top of your app
+with app content configured to scroll beneath it. The app must position the
+`px-app-nav` element using CSS to fix it to the top of the view. By default, the
+element is `position: relative` and `display: block`, causing it to fill its
+parent container's width but scroll out of the view as the user scrolls down
+the page.
+
+The following example fixes the element to the top of the view so content
+can scroll beneath it:
+
+
+    <style>
+      px-app-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+    </style>
+    <px-app-nav items="..."></px-app-nav>
+
+Using position fixed will cause the `px-app-nav` element to cover other HTML
+elements at the top of your page. Offset your content (e.g. by setting
+`margin-top: 80px` on your content container) to ensure the navigation does not
+cover other app elements unintentionally.
+
+--------------------------------------------------------------------------------
+
+#### 2. Collapsed navigation
+
+The collapsed navigation style is also a persistent bar fixed to the top of the
+viewport. The navigation items are displayed in a dropdown menu that the user
+can open by clicking or tapping on the open button; and closed by selecting
+a navigation item or clicking or tapping anywhere else in the viewport.
+
+If no item is selected, the collapsed navigation will show an empty outline
+for the dropdown trigger button. If an item is selected that item's label and
+icon will be shown in the dropdown trigger button.
+
+This style can be enabled in a few different ways:
+
+<strong>Force collapse:</strong> Setting the `collapseAll` property to true or enabling the
+`collapse-all` attribute on the `px-app-nav` element will force the navigation
+to use the collapsed style at all times. Example:
+
+
+    <px-app-nav items="..." collapse-all></px-app-nav>
+
+
+<strong>Dynamic collapse:</strong> The `collapseAt` property can be used to dynamically
+collapse and un-collapse the navigation when the viewport size changes. If the
+size of the `px-app-nav` element's container becomes smaller than the `collapseAt`
+value, it is collapsed. If the element's container becomes larger than the
+`collapseAt` value, it is un-collapsed.
+
+
+    <px-app-nav items="..." collapse-at="420"></px-app-nav>
+
+
+The `collapseAt` property should be a number that will be converted into pixels.
+
+When the navigation is automatically collapsed or uncollapsed, the read-only
+`collapsed` property will be updated. Watch that property to figure out the
+state of the navigation.
+
+<strong>Auto-collapse:</strong> When the default horizontal style is in use and only 1 item
+fits in the space available to the `px-app-nav` element, the navigation will be
+automatically collapsed.
+
+<strong>Positioning a collapsed app-nav in an app:</strong>
+
+Follow the sticking instructions in the Horizontal style section above to
+correctly position the `px-app-nav` element on the page in collapsed style.
+
+--------------------------------------------------------------------------------
+
+#### 3. Vertical navigation
+
+The vertical navigation style is fixed to the left or right side of the browser.
+When the navigation is not being interacted with it displays as a narrow strip
+showing only the navigation item icons. When the user hovers over the vertical
+navigation, the bar animates open and allows the user to click/tap to select
+a new item. Example:
+
+
+    <px-app-nav items="..." vertical></px-app-nav>
+
+
+<strong>Positioning a vertical app-nav  in an app:</strong>
+
+The vertical style defaults to CSS styles `position: absolute; left: 0; top: 0;`
+to stick to the left side of the screen. This causes the navigation element to
+fill the first `position: relative` item above it in the DOM. Override these
+values to position it in whatever way your app requires:
+
+
+      <style>
+        px-app-nav {
+          position: fixed;
+          right: 0;
+          top: 0;
+        }
+      </style>
+      <px-app-nav items="..."></px-app-nav>
+
+--------------------------------------------------------------------------------
+
+
+### Styling
+
 The following custom properties are available for styling:
 
 Custom property | Description
 ----------------|-------------
-`--px-app-nav-background-color` | Background color for the app navigation component
-`--px-app-nav-link-text-color` | Text color for the nav items
-`--px-app-nav-link-hover-color` | Background color for a nav item when a user hovers over one
-`--px-app-nav-link-selected-active-color` | Background color for a nav item when a user clicks on one
-`--px-app-nav-link-selected-color` | Background color for the selected nav item
-`--px-app-nav-hamburger-button-color` | Fill color for the hamburger menu icon
+`--px-app-nav-background-color`                                         | The background color of the app nav bar
+`--px-app-nav-item-background-color--collapsed`                         | The background color for a collapsed app nav
+`--px-app-nav-item-background-color--empty`                             | The background color for an empty app nav
+`--px-app-nav-item-background-color--hover`                             | The hover state color for an app nav item
+`--px-app-nav-item-background-color--pressed`                           | The pressed state color for an app nav item
+`--px-app-nav-item-background-color--selected`                          | The background color for a selected app nav item
+`--px-app-nav-item-background-color`                                    | The background color for an unselected app nav item
+`--px-app-nav-item-icon-color--collapsed`                               | The color of the icon in a collapsed app nav
+`--px-app-nav-item-icon-color--hover`                                   | The hover state color for an icon
+`--px-app-nav-item-icon-color--pressed`                                 | The pressed state color for an icon
+`--px-app-nav-item-icon-color--selected`                                | The  color for the icon in a selected item
+`--px-app-nav-item-icon-color`                                          | The normal, unselected color for an icon
+`--px-app-nav-item-stripe-color--selected`                              | The stripe accent color on the top or side of a selected item
+`--px-app-nav-item-text-color--collapsed`                               | The text color in a collapsed state
+`--px-app-nav-item-text-color--hover`                                   | The text color in a hover state
+`--px-app-nav-item-text-color--pressed`                                 | The text color in a pressed state
+`--px-app-nav-item-text-color--selected`                                | The text color for a selected item
+`--px-app-nav-item-text-color`                                          | The normal, unselected text color
+`--px-app-nav-subitem-background-color--hover`                          | The hover state background color for the dropdown submenu
+`--px-app-nav-subitem-background-color--selected`                       | The  background color for a selected item in the dropdown submenu
+`--px-app-nav-subitem-background-color`                                 | The background color for the dropdown submenu
+`--px-app-nav-subitem-text-color--collapsed`                            | The collapsed state text color for a submenu item
+`--px-app-nav-subitem-text-color--hover`                                | The hover state text color for a submenu item
+`--px-app-nav-subitem-text-color--selected`                             | The text color for a selected submenu item
+`--px-app-nav-subitem-text-color`                                       | The normal, unselected text color for a submenu item
+`--px-app-nav-subitem-background-color--collapsed`                      | The background color for the dropdown submenu in a collapsed state
+`--px-app-nav-subitem-background-color--collapsed-hover`                | The hover state background color for the dropdown submenu in a collapsed state
+`--px-app-nav-subitem-text-color--parent-collapsed-selected`            | The background color for the selected dropdown submenu in a collapsed state
+`--px-app-nav-subitem-background-color--parent-collapsed-selected`      | The background color for the parent item of a selected submenu item in a collapsed state
+`--px-app-nav-subitem-accent-color--parent-collapsed-selected`          | The strip accent color for the parent item of a selected submenu item in a collapsed state
+`--px-app-nav-subitem-background-color--parent-collapsed-hover`         | The background color for the parent of a hovered submenu item in a collapsed state
+`--px-app-nav-subitem-background-color--parent-collapsed-selected`      | The background color for the parent of a selected submenu item in a collapsed state
+`--px-app-nav-subitem-text-color--parent-collapsed-selected`            | The text color for the parent of a hovered submenu item in a collapsed state
+`--px-app-nav-subitem-text-color--parent-collapsed-not-selected`        | The text color for the parent of an open, unselected submenu item in a collapsed state
+`--px-app-nav-subitem-background-color--parent-collapsed-not-selected`  | The background color for the parent of an open, unselected submenu item in a collapsed state
+
 
 @element px-app-nav
-@blurb Nav bar / drawer for applications.
+@blurb A navigation component that allows the user to browse app pages and content
 @homepage index.html
 @demo index.html
 -->
@@ -45,627 +433,90 @@ Custom property | Description
   <template>
     <style include="px-app-nav-styles"></style>
 
+    <section class="app-nav" id="container">
+      <section class="app-nav__items" id="items">
+        <!-- STATE: Horizontal or menu nav, any visible items -->
+        <template is="dom-if" if="[[!vertical]]">
+          <template is="dom-repeat" items="{{items}}" filter="_isItemVisible" id="visible">
+            <!-- Stamp groups, which hold children -->
+            <template is="dom-if" if="{{_isItemParent(item, keys.children)]]">
+              <px-app-nav-group label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.parent)]]" collapsed$="[[vertical]]">
+                <template is="dom-repeat" items="[[_getItemProp(item, keys.children)]]" as="subitem">
+                  <px-app-nav-subitem item="[[subitem]]" label="[[_getItemProp(subitem, keys.label)]]" selected$="[[_isItemSelected(subitem, selectedMeta.item)]]"></px-app-nav-subitem>
+                </template>
+              </px-app-nav-group>
+            </template>
 
-    <nav role="navigation">
-      <button class="btn btn--bare btn--svg" on-tap="toggleNav">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="291 489.4 20 16">
-          <path d="M291 489.4v4h20v-4h-20zm0 10h20v-4h-20v4zm0 6h20v-4h-20v4z"/>
-        </svg>
-      </button>
-      <ul id="navitemlist" class="navbar__item list-bare">
-        <template is="dom-repeat" items="{{navItems}}" as="navitem">
-          <li>
-            <a class$="{{navitem.class}}" href$="{{navitem.href}}" event-name$="{{navitem.eventName}}" on-tap="navClickHandler" target$="_is NewTarget(item  )">
-              <iron-icon class="u-mr-- nav-item--icon" icon$="fa:{{navitem.icon}}" id$="nav-item-{{index}}"></iron-icon>
-              <span class="u-ml--">{{navitem.label}}</span>
-              <px-tooltip for$="nav-item-{{index}}" orientation="right" tooltip-message="{{navitem.label}}" hidden$="{{_navExpanded}}"></px-tooltip>
-            </a>
-            <ul class$="{{navitem.subitemlistclass}}">
-              <template is="dom-repeat" items="{{navitem.subitems}}">
-                <li>
-                  <a href$="{{item.href}}" class$="{{item.class}}" event-name$="{{item.eventName}}" on-click="subnavClickHandler"><span class$="{{navitem.subitemclass}}">{{item.label}}</span></a>
-                </li>
-              </template>
-            </ul>
-          </li>
+            <!-- Stamp plain old items, which hold children -->
+            <template is="dom-if" if="[[_isItemNotParent(item, keys.children)}}">
+              <px-app-nav-item item="[[item]]" label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.item)]]"></px-app-nav-item>
+            </template>
+          </template>
         </template>
-      </ul>
-    </nav>
-    <content select=".auth"></content>
+
+        <!-- STATE: Items overflowed or collapsed -->
+        <template is="dom-if" if="[[anyOverflowed]]">
+          <px-app-nav-group
+              id="overflowedGroup"
+              cancel-select
+              fixed-width="[[_getDropdownWidth(allCollapsed)]]"
+              label="[[_getDropdownLabel(selectedMeta.item, selectedMeta.parent, keys.label, collapseWithIcon, allCollapsed)]]"
+              icon="[[_getDropdownIcon(selectedMeta.item, selectedMeta.parent, keys.icon, collapseWithIcon, allCollapsed, anyOverflowed, collapseOpened)]]"
+              selected$="[[_isSelectedOverflowed(selectedMeta.item, selectedMeta.parent, overflowedItems)]]"
+              hide-dropdown-icon="[[_isCollapsedCaratHidden(allCollapsed, collapseWithIcon)]]"
+              no-highlight="[[allCollapsed]]"
+              empty-icon="[[_isCollapsedDropdownEmpty(selectedMeta.item, allCollapsed, collapseWithIcon)]]"
+              empty-label="[[_isCollapsedDropdownEmpty(selectedMeta.item, allCollapsed, collapseWithIcon)]]"
+              fit-into="[[fitInto]]"
+              opened="{{collapseOpened}}">
+            <!-- Second item stamp: overflowed/collapsed items -->
+            <template is="dom-repeat" items="[[items]]" filter="_isItemOverflowed" id="overflowed">
+              <!-- Stamp groups, which hold children -->
+              <template is="dom-if" if="[[_isItemParent(item, keys.children)]]">
+                <px-app-nav-subgroup label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.parent)]]" overflowed$="[[someOverflowed]]" collapsed$="[[allCollapsed]]">
+                  <template is="dom-repeat" items="[[_getItemProp(item, keys.children)]]" as="subitem">
+                    <px-app-nav-subitem item="[[subitem]]" label="[[_getItemProp(subitem, keys.label)]]" selected$="[[_isItemSelected(subitem, selectedMeta.item)]]" parent-selected$="[[_isItemSelected(item, selectedMeta.parent)]]" collapsed$="[[allCollapsed]]"></px-app-nav-item>
+                  </template>
+                </px-app-nav-subgroup>
+              </template>
+
+              <!-- Stamp plain old items, which hold children -->
+              <template is="dom-if" if="[[_isItemNotParent(item, keys.children)]]">
+                <px-app-nav-item item="[[item]]" label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.item)]]" overflowed$="[[someOverflowed]]" collapsed$="[[allCollapsed]]">
+                </px-app-nav-item>
+              </template>
+            </template>
+          </px-app-nav-group>
+        </template>
+      </section>
+
+      <!-- STATE: Vertical nav -->
+      <template is="dom-if" if="[[vertical]]">
+        <!-- Second item stamp: overflowed/collapsed items -->
+        <template is="dom-repeat" items="[[items]]" id="vertical">
+          <!-- Stamp groups, which hold children -->
+          <template is="dom-if" if="[[_isItemParent(item, keys.children)]]">
+            <px-app-nav-subgroup label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.parent)]]" collapsed only-show-icon="[[!verticalOpened]]" empty-icon="[[_isIconEmpty(item, keys.icon)]]">
+              <template is="dom-repeat" items="[[_getItemProp(item, keys.children)]]" as="subitem">
+                <px-app-nav-subitem item="[[subitem]]" label="[[_getItemProp(subitem, keys.label)]]" selected$="[[_isItemSelected(subitem, selectedMeta.item)]]" parent-selected$="[[_isItemSelected(item, selectedMeta.parent)]]" collapsed></px-app-nav-item>
+              </template>
+            </px-app-nav-subgroup>
+          </template>
+
+          <!-- Stamp plain old items, which hold children -->
+          <template is="dom-if" if="[[_isItemNotParent(item, keys.children)]]">
+            <px-app-nav-item item="[[item]]" label="[[_getItemProp(item, keys.label)]]" icon="[[_getItemProp(item, keys.icon)]]" selected$="[[_isItemSelected(item, selectedMeta.item)]]" collapsed only-show-icon$="[[!verticalOpened]]" empty-icon="[[_isIconEmpty(item, keys.icon)]]">
+            </px-app-nav-item>
+          </template>
+        </template>
+      </template>
+
+      <section class="app-nav__actions" id="actions">
+        <slot id="actionsvisible" name="actions"></slot>
+      </section>
+    </section>
+
   </template>
 </dom-module>
 
-<script>
-
-  Polymer({
-
-    is: 'px-app-nav',
-
-    properties: {
-
-      /**
-       * Object array of items and sub-items in the nav. Each object in the Array can specify '[path-key]', 'label', 'icon'
-       * 'eventName', and 'subitems', which is another Array.
-       *
-       * @type {Array}
-       * @default [{}]
-       */
-      navItems: {
-        type: Array,
-        notify: true,
-        value: function() {
-          return [{}];
-        },
-        observer: '_observeChanged'
-      },
-
-      /**
-       * When navigating, this prefix is appended to the relative URL. Defaults to '#', indicating paths are routed via the
-       * hash part of the URL.  To make them relative to current directory, use '/'.
-       *
-       * @type {String}
-       * @default ["#"]
-       */
-      pathPrefix: {
-        value : '#',
-        type: String
-      },
-
-      /**
-       * Allows a level of indirection in the Array of navItems passed in to resolve paths
-       *
-       * @type {String}
-       * @default ["path"]
-       */
-      pathKey: {
-        value: 'path',
-        type: String
-      },
-      /**
-       * Whether the navigation is expanded. Reflected to an attribute (reflectToAttribute: true) so the application can
-       * bind to it and maintain state as needed. Valid values are "false" or "true" (because boolean values cannot be passed into Polymer elements as strings "false")
-       *
-       * @type {String}
-       * @default [true]
-       */
-      navExpanded: {
-        value: "true",
-        type: String,
-        reflectToAttribute: true,
-        notify: true
-      },
-
-      /**
-       * Internal representation of navExpanded as a Boolean because boolean values cannot
-       * be passed into Polymer elements as strings "false"
-       *
-       * @type {Boolean}
-       * @default [true]
-       */
-      _navExpanded: {
-        value: true,
-        type: Boolean,
-        computed: "_computeNavExpanded(navExpanded)"
-      },
-
-      /**
-       * Whether the navigation is contracting. Reflected to an attribute (reflectToAttribute: true) so the application can
-       * bind to it and maintain state as needed.
-       *
-       * @type {Boolean}
-       * @default [true]
-       */
-      navContracting: {
-        value: true,
-        type: Boolean,
-        reflectToAttribute: true
-      },
-
-      /**
-       * Animation function
-       *
-       * @type {Function}
-       * @default [function(){ return {};}]
-       * @private
-       */
-      ani:{
-        type: Object,
-        value:function(){ return {};}
-      }
-    },
-
-    _protocolRE: new RegExp('(http|https)://'),
-
-    _observeChanged: function(newValue) {
-      if (!newValue){
-        this.navItems = [];
-      }
-      else{
-        this.navItems.forEach(this._computeHref, this);
-        this.markSelected(window.location.href);
-        this._setSubNavVisibility();
-        this._potentiallyAdjustAccordion();
-      }
-    },
-
-    _potentiallyAdjustAccordion: function() {
-      this.navItems.forEach(function(item){
-        var navSubitems = item.subitems;
-        if (navSubitems && navSubitems.length >= 1 && item.subSelected) { // if subselected && has subitems
-          var parentA = Polymer.dom(this.$.navitemlist).querySelector('a.subselected');
-          if (parentA) {
-            var parent = parentA.parentElement.querySelector('ul'),
-              heightAfter = (navSubitems.length) * (parentA.clientHeight * 0.6666) + 'px',
-              listResizeAnimation = new SequenceEffect([
-                new KeyframeEffect(parent, [
-                   {height: parent.clientHeight},
-                   {height: heightAfter}
-                  ],
-                  {duration: 200,fill: 'forwards'})
-                ]);
-
-            document.timeline.play(listResizeAnimation);
-          }
-        }
-      }, this);
-    },
-
-    _computeNavExpanded: function() {
-      // ensure that internal representation matches external property
-      if(this.navExpanded === "false") {
-        return false;
-      } else if(this.navExpanded === "true") {
-        return true;
-      } else {
-        return true;
-      }
-    },
-
-    _checkNavExpandedState: function() {
-      if(this._navExpanded) {
-        this.debounce('checkNav', function() {
-          this._expandNav();
-        }, 5);
-      } else {
-        this.debounce('checkNav', function() {
-          this._contractNav();
-        }, 5);
-      }
-    },
-
-    _checkMediaMatches: function(matches) {
-      if (matches) {
-        // width is less than 63.9rem in width
-        if (this._navExpanded) {
-          this.set('navExpanded', 'false');
-          this._checkNavExpandedState();
-        }
-      } else {
-        // width is greater than 63.9rem
-        if (!this._navExpanded) {
-          this.set('navExpanded', 'true');
-          this._checkNavExpandedState();
-        }
-      }
-    },
-
-    /**
-     * Parse navItemsStrings and navItemsPaths to create unified navItems
-     */
-    ready: function() {
-
-      if (this._navExpanded === false) { this._contractNav(); }
-
-      //check to see if navitems have been initialised.
-      if (this.navItems && (this.navItems.length > 0 && !this.navItems[0].href)){
-        this.navItems.forEach(this._computeHref, this);
-        this._setSubNavVisibility();
-        this._potentiallyAdjustAccordion();
-      }
-
-      this._media = window.matchMedia('screen and (max-width: 63.9rem)');
-      // this._checkMediaMatches(this._media.matches);
-
-      this.markSelected(window.location.href);
-
-      var _this = this;
-
-      // add listener on screen width change
-      this._media.addListener(function(data) {
-        _this._checkMediaMatches(data.matches);
-      });
-
-      // add listener for history change event (back button)
-      window.addEventListener('popstate', function(event) {
-        _this.markSelected(window.location.href);
-      });
-
-    },
-
-    /**
-     * When a nav item is selected, calls markSelected(). The actual navigation is accomplished without JavaScript using
-     * an HTML anchor tag unless the passed click event is cancelled / stopPropagation().
-     *
-     * @see #markSelected
-     * @param {Event} evt The click event.
-     * @private
-     */
-
-    navClickHandler: function(evt) {
-      var el = evt.currentTarget;
-      var event = el.getAttribute('event-name')
-
-      if (event) {
-        var navItem = evt.model.dataHost.itemForElement(el);
-        this.fire(event, navItem);
-      }
-      var href = el.getAttribute("href");
-      this.markSelected(href);
-    },
-
-    _closeOpenSubnav: function(openUl) {
-      // find open subnavs and close them
-      var closeAnimation = null,
-          uls = Polymer.dom(this.$.navitemlist).querySelectorAll("ul"),
-          navToHide,
-          navToHideSpans;
-      for (var i=0; i<uls.length; i++) {
-        var ulIsHidden = uls[i].classList.contains('visuallyhidden');
-        if(!ulIsHidden && uls[i] !== openUl){
-          navToHide = uls[i];
-          navToHideSpans = Polymer.dom(navToHide).querySelectorAll("span");
-          closeAnimation = this._closeAccordionEffectAnimation(navToHide, navToHideSpans);
-        }
-      }
-      return closeAnimation;
-    },
-
-    _newAnimateMenuItem: function(navElement) {
-      var _this = this;
-      var subnavUl = Polymer.dom(navElement.parentElement).querySelector('ul');
-      var ulIsHidden = subnavUl.classList.contains('visuallyhidden');
-      var subnavSpans = Polymer.dom(subnavUl).querySelectorAll("span");
-      var openAnimation = null;
-      var animations = [];
-      // returns null if no subnavs are open
-      if(ulIsHidden) {
-        openAnimation = this._openAccordionEffectAnimation(subnavUl, subnavSpans);
-      }
-      var closeAnimation = this._closeOpenSubnav(subnavUl);
-      if(closeAnimation) {
-        animations.push(closeAnimation);
-      }
-      if(openAnimation) {
-        animations.push(openAnimation);
-      }
-      var animation = new SequenceEffect(animations);
-
-      // play the animations
-      var accordionAnimationPlayer = document.timeline.play(animation);
-
-      accordionAnimationPlayer.addEventListener('finish', function(){
-        _this._navResized();
-        if(!_this._navExpanded){
-          _this.toggleNav();
-        }
-      });
-    },
-
-    _navResized: function() {
-      this.fire('nav-height-changed');
-    },
-
-    /**
-     * When a nav item is selected, calls markSelected(). The actual navigation is accomplished without JavaScript using
-     * an HTML anchor tag unless the passed click event is cancelled / stopPropagation().
-     *
-     * @see #markSelected
-     * @param {Event} evt The click event.
-     * @private
-     */
-     subnavClickHandler: function(evt){
-       var el = evt.currentTarget;
-       var event = el.getAttribute('event-name')
-
-       if (event) {
-         var navItem = evt.model.dataHost.itemForElement(el);
-         this.fire(event, navItem);
-       }
-       var href = el.getAttribute("href");
-       this.markSelected(href);
-       var self = this;
-       // We need a short delay for Safari to fire navResized after nav resize.
-       this.async(function() {
-          self._navResized();
-        }, 100);
-     },
-
-    /**
-     * Marks the nav item with the given path as selected, and all others as unselected.
-     *
-     * @param {String} path The selected path
-     */
-    markSelected: function(path) {
-      var resolvedPath = this._parseOutPathPrefix(path);
-      var topLevelNavElems = Polymer.dom(this.root).querySelectorAll("#navitemlist>li");
-
-      if (this.navItems){
-        for (var i = 0; i < this.navItems.length; i++) {
-          var item = this.navItems[i];
-          item.selected = (item[this.pathKey] === resolvedPath);
-          item.subSelected = false;
-          item.class = item.selected ? "selected" : "";
-          if (item.subitems) {
-            item.subitems.forEach(function(subitem, idx) {
-              subitem.selected = subitem[this.pathKey] === resolvedPath;
-              subitem.class = subitem.selected ? "selected" : "";
-              if(topLevelNavElems.length > 0){
-                if(idx < Polymer.dom(topLevelNavElems[i]).querySelectorAll('ul>li').length) {
-                  this.toggleClass("selected", subitem.selected, Polymer.dom(topLevelNavElems[i]).querySelectorAll('ul>li')[idx].querySelector('a'));
-                }
-              }
-              item.subSelected = subitem.selected ? true : item.subSelected;
-            }, this);
-          }
-          var topLevelLink = Polymer.dom(topLevelNavElems[i]).querySelector('a');
-          this.toggleClass("selected", item.selected, topLevelLink);
-          this.toggleClass("subselected", item.subSelected, topLevelLink);
-
-          if( (item.subSelected || item.selected ) && typeof topLevelNavElems[i] !== 'undefined') {
-            this._newAnimateMenuItem(topLevelNavElems[i].querySelector('a'));
-          }
-        }
-      }
-
-    },
-
-    _setSubNavVisibility: function(){
-      this.navItems.forEach( function(item){
-        if (item.subSelected){
-          item.subitemlistclass = "list-bare";
-          item.subitemclass = "";
-          item.class = "subselected";
-        }
-        else{
-          item.subitemlistclass = "visuallyhidden list-bare";
-          item.subitemclass = "visuallyhidden";
-        }
-      }, this);
-    },
-
-    _parseOutPathPrefix: function(fullPath) {
-      if (!fullPath) {
-          return null;
-      }
-      var resolvedPath = fullPath.replace(this._protocolRE, '');
-      var idx = resolvedPath.indexOf(this.pathPrefix);
-      var argsIdx = resolvedPath.indexOf('?');
-
-      if (argsIdx === -1){
-        argsIdx = resolvedPath.length;
-      }
-
-      return resolvedPath.substring(idx + 1, argsIdx);
-    },
-
-    _computeHref: function(item) {
-      if (item.externalLink && item[this.pathKey]) {
-          item.href = item[this.pathKey];
-      } else {
-        item.href = item[this.pathKey] ? this.pathPrefix + item[this.pathKey] : null;
-      }
-
-      if (!item.class){
-        item.subitemlistclass = item.subitemclass = item.class = "";
-
-      }
-      if (item.subitems) {
-        item.subitems.forEach(function(subitem) {
-          this._computeHref(subitem);
-        }, this);
-      }
-    },
-
-    _keyframeFadeIn: function(el) {
-      return new KeyframeEffect(el, [ {opacity: 0}, {opacity: 1} ], 100);
-    },
-
-    _keyframeFadeOut: function(el) {
-      return new KeyframeEffect(el, [ {opacity: 1}, {opacity: 0} ], 100);
-    },
-
-    _keyframeFadeInAll: function(els) {
-      var _this = this;
-      return new GroupEffect(els.map(function(el) {
-        return _this._keyframeFadeIn(el);
-      }));
-    },
-
-    _keyframeFadeOutAll: function(els) {
-      var _this = this;
-      return new GroupEffect(els.map(function(el) {
-        return _this._keyframeFadeOut(el);
-      }));
-    },
-
-    _keyframeContractWidth: function(el) {
-      return new KeyframeEffect(el, [{ width: '219px'}, { width:  '56px' }], 200);
-    },
-
-    _keyframeExpandWidth: function(el) {
-      return new KeyframeEffect(el, [{ width: '56px' }, { width: '219px' }], 200);
-    },
-
-    _keyframeRemoveClass: function(el, className) {
-      var myEffect = new KeyframeEffect(el, [], { duration: 0, fill: 'forwards' });
-      myEffect.onsample = function(timeFraction, effect, animation) {
-         el.classList.remove(className);
-      };
-
-      return myEffect;
-    },
-
-    _keyframeRemoveClassAll: function(els, className) {
-      var _this = this;
-      return new GroupEffect(els.map(function(el) {
-        return _this._keyframeRemoveClass(el, className);
-      }));
-    },
-
-    _keyframeAddClass: function(el, className) {
-      var myEffect = new KeyframeEffect(el, [], { duration: 0, fill: 'forwards' });
-      myEffect.onsample = function(timeFraction, effect, animation) {
-         el.classList.add(className);
-      };
-
-      return myEffect;
-    },
-
-    _keyframeAddClassAll: function(els, className) {
-      var _this = this;
-      return new GroupEffect(els.map(function(el) {
-        return _this._keyframeAddClass(el, className);
-      }));
-    },
-
-    _keyframeToggleClass: function(el, className, applyClass) {
-      var myEffect = new KeyframeEffect(el, [], { duration: 0, fill: 'forwards' });
-      myEffect.onsample = function(timeFraction, effect, animation) {
-        if (timeFraction == null) {
-          return;
-        } else {
-          if(!applyClass) {
-            applyClass = null;
-          }
-          el.classList.toggle(className, applyClass);
-        }
-      };
-
-      return myEffect;
-    },
-
-    _keyframeToggleClassAll: function(els, className) {
-      var _this = this;
-      return new GroupEffect(els.map(function(el) {
-        return _this._keyframeToggleClass(el, className);
-      }));
-    },
-
-    _keyframeContractAccordian: function(el) {
-      var accordionHeight = el.clientHeight + 'px';
-      return new KeyframeEffect(el, [{ height: accordionHeight }, { height: '0px' }], { duration: 200, fill: 'forwards' });
-    },
-
-    _keyframeExpandAccordian: function(el, textEls) {
-      var accordionHeight = textEls.length * (el.parentElement.clientHeight * 0.6666) + 'px';
-      return new KeyframeEffect(el, [{ height: '0px' }, { height: accordionHeight }], { duration: 200, fill: 'forwards' });
-    },
-
-    _closeAccordionEffectAnimation: function(mainEl, textEls){
-      var _this = this;
-      // animate close the open accordion
-      return new SequenceEffect([
-        _this._keyframeFadeOutAll(textEls),
-        _this._keyframeAddClassAll(textEls, 'visuallyhidden'),
-        _this._keyframeContractAccordian(mainEl),
-        _this._keyframeAddClass(mainEl, 'visuallyhidden'),
-      ]);
-    },
-
-    _openAccordionEffectAnimation: function(mainEl, textEls){
-      //animate open the clicked accordion
-      var _this = this;
-      //animate close the open accordion
-      return new SequenceEffect([
-        _this._keyframeToggleClass(mainEl, 'visuallyhidden'),
-        _this._keyframeExpandAccordian(mainEl, textEls),
-        _this._keyframeToggleClassAll(textEls, 'visuallyhidden'),
-        _this._keyframeFadeInAll(textEls)
-      ]);
-    },
-
-    _contractNavAnimation: function(navEl, textEls) {
-      var _this = this;
-      return new SequenceEffect([
-        _this._keyframeFadeOutAll(textEls),
-        _this._keyframeToggleClass(navEl, 'navbar--text-hidden', true),
-        _this._keyframeContractWidth(navEl),
-        _this._keyframeToggleClass(navEl, 'navbar--collapsed', true)
-      ]);
-    },
-
-    _expandNavAnimation: function(navEl, textEls) {
-      var _this = this;
-      return new SequenceEffect([
-        _this._keyframeToggleClass(navEl, 'navbar--collapsed', false),
-        _this._keyframeExpandWidth(navEl),
-        _this._keyframeToggleClass(navEl, 'navbar--text-hidden', false),
-        _this._keyframeFadeInAll(textEls)
-      ]);
-    },
-
-    _getTextEls: function() {
-      return Polymer.dom(this.root).querySelectorAll("span");
-    },
-
-    _expandNav: function() {
-      this.set('navExpanded', 'true');
-      this.fire('nav-expanding');
-      var navAnimation = this._expandNavAnimation(this, this._getTextEls());
-      this.ani = document.timeline.play(navAnimation);
-      this.ani.addEventListener('finish', function(){
-        //raise event once we've expanded;
-        this.fire('nav-expanded');
-        // let the nav bar animation truly finish before broadcasting a window resize event
-        // so other components can react after the animation
-        this.async(function(){
-          window.dispatchEvent(new Event('resize'));
-        }, 50);
-      }.bind(this));
-    },
-
-    _contractNav: function() {
-      //raise event we're about to close.
-      this.set('navExpanded','false');
-      this.fire('nav-collapsing');
-      this.navContracting = true;
-      var navAnimation = this._contractNavAnimation(this, this._getTextEls());
-      this.ani = document.timeline.play(navAnimation);
-      this.ani.addEventListener('finish', function(){
-        this.navContracting = false;
-        this.fire('nav-collapsed');
-        // let the nav bar animation truly finish before broadcasting a window resize event
-        // so other components can react after the animation
-        this.async(function(){
-          window.dispatchEvent(new Event('resize'));
-        }, 50);
-      }.bind(this));
-    },
-
-    _toggleNavExpanded: function() {
-      if(this.navExpanded === 'true') {
-        this.set('navExpanded', 'false');
-      } else {
-        this.set('navExpanded','true');
-      }
-    },
-
-    /**
-     * Called when the nav expander control is clicked.
-     *
-     * @param {Event} evt The click event.
-     * @private
-     */
-    toggleNav: function(evt){
-      if (this._dontToggle) return;
-
-      this._toggleNavExpanded();
-      this._checkNavExpandedState();
-      this._dontToggle = true;
-      this.async(function() {
-        this._dontToggle = false;
-      }, 500);
-    }
-
-  });
-</script>
+<script src="px-app-nav.es6.js"></script>

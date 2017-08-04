@@ -1,14 +1,11 @@
-# Px-app-nav
+# px-app-nav
 [![Build Status](https://travis-ci.org/PredixDev/px-app-nav.svg?branch=master)](https://travis-ci.org/PredixDev/px-app-nav)
 
-[![px-app-nav demo](px-app-nav.png?raw=true)](https://github.com/PredixDev/px-app-nav?target=_blank)
-
-
-Px-app-nav is a navigation bar or drawer for applications.
+Px-app-nav is a Predix UI component which can be used as a navigation bar or as a drawer for applications.
 
 ## Overview
 
-Use the px-app-nav to cleanly navigate portions or pages of a application. The navigation can be minimized or expanded to reveal the navigation items, which can have sub items. The navigation can host other web components or authentication such as the px-login web component. Navigation items can use font-awesome icons to better communicate with the user.
+Use `px-app-nav` to cleanly navigate portions or pages of a application. The navigation can be minimized or expanded to reveal the navigation items, which can have sub-items. The navigation can host other web components or authentication such as the px-login web component. Navigation items can use icons to better communicate with the user.
 
 ## Usage
 
@@ -40,7 +37,7 @@ Finally, use the component in your application:
 <br />
 <hr />
 
-## documentation
+## Documentation
 
 Read the full API and view the demo [here](https://predixdev.github.io/px-app-nav).
 

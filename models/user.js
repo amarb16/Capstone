@@ -1,4 +1,3 @@
-
 // grab the mongoose module
 var mongoose = require('mongoose');
 
@@ -21,6 +20,7 @@ module.exports = mongoose.model('user', {
       validate: customValidator,
       required: true},
     field: {type: String, required: true},
+    business: {type: String, required: true},
     location: {type: String, required: true},
     address: {type: String, required: true},
     travelQues: {type: String, required: true},

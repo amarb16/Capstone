@@ -1,6 +1,7 @@
 var express = require('express'),
 router = express.Router(),
-User = require('../models/user.js') //links to user.js file
+User = require('../models/user.js'), //links to user.js file
+Pic = require('../models/profilePicture.js')
 
 //POST (C.R.U.D. - CREATE)
 router.post('/users', function (req, res) {
@@ -10,6 +11,16 @@ router.post('/users', function (req, res) {
   		res.json(err) //sends error messge to front end
   	}
   	res.json(user);
+  })
+});
+
+router.post('/profile-pictures', function (req, res) {
+  var pic = new Pic(req.body.pic);
+  user.save(function(err, pic) {
+  	if(err) {
+  		res.json(err) //sends error messge to front end
+  	}
+  	res.json(pic);
   })
 });
 
